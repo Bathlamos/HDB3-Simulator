@@ -5,12 +5,12 @@ public final class HDB3Encoder {
 	//This is a utility class
 	private HDB3Encoder(){}
 
-	public String encode(String value){
-		return "";
+	public static String encode(String value){
+		return value;
 	}
 	
-	public String decode(String value){
-		return "";
+	public static String decode(String value){
+		return value;
 	}
 	
 }
