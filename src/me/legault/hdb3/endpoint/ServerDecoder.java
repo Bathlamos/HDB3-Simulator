@@ -39,7 +39,7 @@ public class ServerDecoder extends Endpoint {
 				listen(new Function<String>() {
 
 					public boolean apply(String message) {
-						println(HDB3Encoder.decode(message));
+						println("Decoded to " + HDB3Encoder.decode(message));
 						return false;
 					}
 

@@ -45,7 +45,6 @@ public class KeyboardEncoder extends Endpoint {
 				String line;
 				println("Now listening for keyboard input");
 				do {
-					System.out.print("> ");
 					line = keyboard.nextLine();
 
 					if (!validateBinaryInput(line)) {
@@ -53,7 +52,10 @@ public class KeyboardEncoder extends Endpoint {
 						continue;
 					}
 
-					send(HDB3Encoder.encode(line));
+					println("Text input " + line);
+					String encoded = HDB3Encoder.encode(line);
+					println("Encoded to " + encoded);
+					send(encoded);
 				}while(line != null);
 				
 				keyboard.close();
