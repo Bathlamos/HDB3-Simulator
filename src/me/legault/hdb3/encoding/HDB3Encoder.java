@@ -6,84 +6,85 @@ public final class HDB3Encoder {
 	private HDB3Encoder() {
 	}
 
-	public static String encode(String data) {
-		int lastConsecutiveZeros = 0;
-		boolean evenParity = true; // Since last violation
-		boolean firstViolation = true;
-		boolean lastPulsePositive = false;
-		int n = data.length();
-		StringBuilder sb = new StringBuilder(n);
+	public static String encode(String message) {
+		String hdb3stream = message;
 
-		for (int i = 0; i < n; i++) {
-			if (data.charAt(i) == '1') {
-				appendConsecutiveZeros(sb, lastConsecutiveZeros);
-				sb.append(lastPulsePositive ? '-' : '+');
-				lastPulsePositive = !lastPulsePositive;
-				lastConsecutiveZeros = 0;
-				evenParity = !evenParity;
-			} else {
-				lastConsecutiveZeros++;
-			}
+		int index0;
+		index0 = hdb3stream.indexOf("0000");
+		int index1 = 0;
 
-			// We introduce a violation
-			if (lastConsecutiveZeros == 4) {
-				if (evenParity || firstViolation) {
-					sb.append(lastPulsePositive ? "000+" : "000-");
-					evenParity = !evenParity;
-				} else {
-					sb.append(lastPulsePositive ? "-00-" : "+00+");
-					lastPulsePositive = !lastPulsePositive;
-				}
-				firstViolation = false;
-				lastConsecutiveZeros = 0;
-			}
+		while (index0 != -1) {
+			if ((index0 - index1) % 2 == 1)
+				hdb3stream = hdb3stream.substring(0, index0) + "000V"
+						+ hdb3stream.substring(index0 + 4);
+			else
+				hdb3stream = hdb3stream.substring(0, index0) + "B00V"
+						+ hdb3stream.substring(index0 + 4);
+
+			index1 = index0 + 4;
+
+			index0 = hdb3stream.indexOf("0000");
 		}
 
-		appendConsecutiveZeros(sb, lastConsecutiveZeros);
+		int signal = 0;
 
-		return sb.toString();
+		char last1bit = '0';
+		char lastbit = '0';
+
+		for (int pos = 0; pos < message.length(); pos++) {
+			if (hdb3stream.charAt(pos) == '1') {
+				if (signal % 2 == 0) {
+					last1bit = '+';
+				} else {
+					last1bit = '-';
+				}
+
+				lastbit = last1bit;
+				hdb3stream = hdb3stream.substring(0, pos) + lastbit
+						+ hdb3stream.substring(pos + 1);
+				signal++;
+			} else if (hdb3stream.charAt(pos) == 'V') {
+				hdb3stream = hdb3stream.substring(0, pos) + lastbit
+						+ hdb3stream.substring(pos + 1);
+			} else if (hdb3stream.charAt(pos) == 'B') {
+				if (last1bit == '+')
+					lastbit = '-';
+				else
+					lastbit = '+';
+				signal++;
+				hdb3stream = hdb3stream.substring(0, pos) + lastbit
+						+ hdb3stream.substring(pos + 1);
+			}
+		}
+		return hdb3stream;
 	}
 
 	public static String decode(String data) {
-		boolean lastPulsePositive = false;
-		int lastConsecutiveZeros = 0;
-		boolean isOneWaiting = false;
-		int n = data.length();
-		StringBuilder sb = new StringBuilder(n);
 
-		for (int i = 0; i < n; i++) {
-			char element = data.charAt(i);
-			if (element == '+' || element == '-') {
-				boolean pulsePositive = element == '+';
-				if (lastPulsePositive != pulsePositive) {
-					if(isOneWaiting)
-						sb.append('1');
-					appendConsecutiveZeros(sb, lastConsecutiveZeros);
-					isOneWaiting = true;
-					lastPulsePositive = pulsePositive;
-					lastConsecutiveZeros = 0;
-				}else{
-					//We have a violation
-					if(lastConsecutiveZeros == 3 && isOneWaiting)
-						sb.append("1");
-					isOneWaiting = false;
-					sb.append("0000");
-					lastConsecutiveZeros = 0;
+		String message = data;
+
+		char lastpo1 = '0';
+		char tempc = '0';
+
+		for (int pos = 0; pos < message.length(); pos++) {
+			if (message.charAt(pos) != '0') {
+				tempc = message.charAt(pos);
+
+				if (lastpo1 == message.charAt(pos)) {
+					message = message.substring(0, pos - 3) + "0000"
+							+ message.substring(pos + 1);
 				}
-			} else {
-				lastConsecutiveZeros++;
+				lastpo1 = tempc;
 			}
 		}
 
-		if(isOneWaiting)
-			sb.append('1');
-		appendConsecutiveZeros(sb, lastConsecutiveZeros);
-
-		return sb.toString();
+		for (int pos = 0; pos < message.length(); pos++) {
+			if (message.charAt(pos) != '0') {
+				message = message.substring(0, pos) + '1'
+						+ message.substring(pos + 1);
+			}
+		}
+		return message;
 	}
 
-	private static void appendConsecutiveZeros(StringBuilder sb, int numZeros) {
-		for (int j = 0; j < numZeros; j++)
-			sb.append('0');
-	}
 }
