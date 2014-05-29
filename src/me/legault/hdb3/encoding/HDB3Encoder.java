@@ -9,7 +9,7 @@ public final class HDB3Encoder {
 	public static String encode(String data) {
 		int lastConsecutiveZeros = 0;
 		boolean evenParity = true; // Since last violation
-		boolean firstViolation = false;
+		boolean firstViolation = true;
 		boolean lastPulsePositive = false;
 		int n = data.length();
 		StringBuilder sb = new StringBuilder(n);
@@ -27,7 +27,7 @@ public final class HDB3Encoder {
 
 			// We introduce a violation
 			if (lastConsecutiveZeros == 4) {
-				if (evenParity && !firstViolation) {
+				if (evenParity || firstViolation) {
 					sb.append(lastPulsePositive ? "000+" : "000-");
 					evenParity = !evenParity;
 				} else {
